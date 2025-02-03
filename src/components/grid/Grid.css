@@ -1,0 +1,40 @@
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 5px;
+    padding: 10px;
+    max-width: 400px;
+    margin: auto;
+  }
+  
+  .grid-cell {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #ddd;
+    border: 2px solid #999;
+    border-radius: 8px;
+    cursor: pointer;
+    position: relative;
+  }
+  
+  .orb {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    text-align: center;
+    font-weight: bold;
+    line-height: 30px;
+    color: white;
+  }
+  
+  .orb.P1 {
+    background-color: red;
+  }
+  
+  .orb.P2 {
+    background-color: blue;
+  }
+  
