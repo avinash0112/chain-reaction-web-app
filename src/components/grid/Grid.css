@@ -28,6 +28,7 @@
     font-weight: bold;
     line-height: 30px;
     color: white;
+    user-select: none;
   }
   
   .orb.P1 {

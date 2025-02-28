@@ -101,10 +101,7 @@ export const ChainReaction = () => {
         </div>
       )}
       <ChainReactionGrid
-        // rows={6}
-        // cols={6}
         sGrid={sGrid}
-        setSGrid={setSGrid}
         handleCellClick={handleGameStateUpdate}
       />
     </>

@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import "./Grid.css"
-const ChainReactionGrid = ({ rows = 6, cols = 6,sGrid,setSGrid,handleCellClick }) => {
 
+const ChainReactionGrid = ({ sGrid,handleCellClick }) => {
   return (
     <div className="grid-container">
       {sGrid?.map((row, rowIndex) =>
