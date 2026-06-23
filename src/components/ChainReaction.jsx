@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
 import ChainReactionGrid from "./grid/Grid";
 
-const socket = io("http://localhost:3000");
+const SERVER_URL = import.meta.env.VITE_SERVER_URL ?? "http://localhost:3000";
+const socket = io(SERVER_URL);
 
 export const ChainReaction = () => {
   const [sessionNameInput, setSessionNameInput] = useState("");
@@ -155,7 +156,7 @@ export const ChainReaction = () => {
           <button onClick={handleLeaveSession}>Leave Session</button>
           <h3>Players in session:</h3>
           <ul>
-            {players.map((player) => (
+            {(players ?? []).filter(Boolean).map((player) => (
               <li key={player}>{player}</li>
             ))}
           </ul>
