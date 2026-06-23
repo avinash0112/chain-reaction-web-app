@@ -4,4 +4,9 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: {
+    // Bind to 0.0.0.0 so the dev server is reachable from other devices on the
+    // same LAN/WiFi (Vite prints a "Network:" URL on startup to share).
+    host: true,
+  },
 })

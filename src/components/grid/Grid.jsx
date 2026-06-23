@@ -1,9 +1,9 @@
 import { motion } from "framer-motion";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import "./Grid.css";
 
-const ORB_COLORS: Record<string, string> = {
+const ORB_COLORS = {
   P0: "red",
   P1: "blue",
   P2: "green",
@@ -12,8 +12,8 @@ const ORB_COLORS: Record<string, string> = {
 
 const GRID_SIZE = 6;
 
-function validDirs(r: number, c: number): string[] {
-  const dirs: string[] = [];
+function validDirs(r, c) {
+  const dirs = [];
   if (r > 0) dirs.push("up");
   if (r < GRID_SIZE - 1) dirs.push("down");
   if (c > 0) dirs.push("left");
@@ -21,40 +21,27 @@ function validDirs(r: number, c: number): string[] {
   return dirs;
 }
 
-function neighborOf(r: number, c: number, dir: string): [number, number] {
+function neighborOf(r, c, dir) {
   if (dir === "up") return [r - 1, c];
   if (dir === "down") return [r + 1, c];
   if (dir === "left") return [r, c - 1];
   return [r, c + 1];
 }
 
-interface Cell {
-  count: number;
-  player: string | null;
-  capacity: number;
-}
-
-interface Props {
-  grid: Cell[][] | null;
-  myPlayer: string | null;
-  isMyTurn: boolean;
-  gameOver: boolean;
-  handleCellClick: (row: number, col: number) => void;
-  explodedAt?: [number, number, string] | null;
-}
-
-const ChainReactionGrid: React.FC<Props> = ({
+const ChainReactionGrid = ({
   grid,
   myPlayer,
   isMyTurn,
   gameOver,
   handleCellClick,
+  // Every cell that exploded in the current wave: [row, col, owner].
+  // The server fires a whole wave at once, so this is a list, not one cell.
   explodedAt,
 }) => {
   const [burstKey, setBurstKey] = useState(0);
 
   useEffect(() => {
-    if (explodedAt) {
+    if (explodedAt && explodedAt.length > 0) {
       setBurstKey((k) => k + 1);
     }
   }, [explodedAt]);
@@ -63,12 +50,17 @@ const ChainReactionGrid: React.FC<Props> = ({
     return <div className="grid-loading">Waiting for game state…</div>;
   }
 
-  const [burstR, burstC, burstPlayer] = explodedAt ?? [-1, -1, ""];
-  const receivingCells = new Set<string>();
+  // Map every exploding cell to its owner, and collect the cells receiving
+  // orbs this wave — so the whole wave animates simultaneously.
+  const burstingCells = new Map();
+  const receivingCells = new Set();
   if (explodedAt) {
-    for (const dir of validDirs(burstR, burstC)) {
-      const [nr, nc] = neighborOf(burstR, burstC, dir);
-      receivingCells.add(`${nr}-${nc}`);
+    for (const [r, c, owner] of explodedAt) {
+      burstingCells.set(`${r}-${c}`, owner);
+      for (const dir of validDirs(r, c)) {
+        const [nr, nc] = neighborOf(r, c, dir);
+        receivingCells.add(`${nr}-${nc}`);
+      }
     }
   }
 
@@ -79,20 +71,22 @@ const ChainReactionGrid: React.FC<Props> = ({
           const isOpponentCell =
             cell.player !== null && cell.player !== myPlayer;
           const disabled = gameOver || !isMyTurn || isOpponentCell;
-          const isBurst =
-            explodedAt && rowIndex === burstR && colIndex === burstC;
-          const isReceiving = receivingCells.has(`${rowIndex}-${colIndex}`);
+          const cellKey = `${rowIndex}-${colIndex}`;
+          const burstOwner = burstingCells.get(cellKey);
+          const isBurst = burstOwner !== undefined;
+          // Don't double-decorate a cell that is itself bursting.
+          const isReceiving = !isBurst && receivingCells.has(cellKey);
 
           return (
             <motion.div
-              key={`${rowIndex}-${colIndex}`}
+              key={cellKey}
               className={`grid-cell${disabled ? " disabled" : ""}`}
               onClick={() => !disabled && handleCellClick(rowIndex, colIndex)}
               whileTap={!disabled ? { scale: 0.9 } : undefined}
             >
               {cell.count > 0 && (
                 <motion.div
-                  key={`orb-${rowIndex}-${colIndex}-${cell.count}-${cell.player}`}
+                  key={`orb-${cellKey}-${cell.count}-${cell.player}`}
                   className={`orb ${cell.player}`}
                   initial={{ scale: 0.5, opacity: 0.6 }}
                   animate={{ scale: 1, opacity: 1 }}
@@ -106,19 +100,21 @@ const ChainReactionGrid: React.FC<Props> = ({
                 <div key={`burst-${burstKey}`} className="cell-burst">
                   <div
                     className="burst-ring"
-                    style={{ borderColor: ORB_COLORS[burstPlayer] ?? "#fff" }}
+                    style={{ borderColor: ORB_COLORS[burstOwner] ?? "#fff" }}
                   />
-                  {validDirs(burstR, burstC).map((dir) => (
+                  {validDirs(rowIndex, colIndex).map((dir) => (
                     <div
                       key={dir}
                       className={`flying-orb flying-orb-${dir}`}
-                      style={{ background: ORB_COLORS[burstPlayer] ?? "#fff" }}
+                      style={{ background: ORB_COLORS[burstOwner] ?? "#fff" }}
                     />
                   ))}
                 </div>
               )}
 
-              {isReceiving && <div className="cell-receive-glow" />}
+              {isReceiving && (
+                <div key={`recv-${burstKey}`} className="cell-receive-glow" />
+              )}
             </motion.div>
           );
         }),
