@@ -5,6 +5,7 @@
   padding: 10px;
   max-width: 400px;
   margin: auto;
+  overflow: visible;
 }
 
 .grid-loading {
@@ -24,6 +25,7 @@
   border-radius: 8px;
   cursor: pointer;
   position: relative;
+  overflow: visible;
 }
 
 .grid-cell.disabled {
@@ -39,20 +41,96 @@
   font-weight: bold;
   line-height: 30px;
   color: white;
+  position: relative;
+  z-index: 1;
 }
 
-.orb.P0 {
-  background-color: red;
+.orb.P0 { background-color: red; }
+.orb.P1 { background-color: blue; }
+.orb.P2 { background-color: green; }
+.orb.P3 { background-color: #ffd740; }
+
+/* ── Explosion overlay ───────────────────────────────────── */
+.cell-burst {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 10;
 }
 
-.orb.P1 {
-  background-color: blue;
+/* Expanding ring that radiates out from the exploding cell */
+.burst-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 36px;
+  height: 36px;
+  margin-top: -18px;
+  margin-left: -18px;
+  border-radius: 50%;
+  border: 3px solid;
+  animation: burst-ring 0.44s ease-out forwards;
 }
 
-.orb.P2 {
-  background-color: green;
+@keyframes burst-ring {
+  0%   { transform: scale(0.6); opacity: 0.9; }
+  60%  { transform: scale(1.8); opacity: 0.5; }
+  100% { transform: scale(2.2); opacity: 0; }
 }
 
-.orb.P3 {
-  background-color: yellow;
+/* Orb particles that fly toward each neighbor */
+.flying-orb {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation-duration: 0.38s;
+  animation-timing-function: ease-in;
+  animation-fill-mode: forwards;
+}
+
+/* 55px = cell (50px) + gap (5px) */
+.flying-orb-up    { animation-name: fly-up; }
+.flying-orb-down  { animation-name: fly-down; }
+.flying-orb-left  { animation-name: fly-left; }
+.flying-orb-right { animation-name: fly-right; }
+
+@keyframes fly-up {
+  0%   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, calc(-50% - 55px)) scale(0.6); opacity: 0; }
+}
+
+@keyframes fly-down {
+  0%   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, calc(-50% + 55px)) scale(0.6); opacity: 0; }
+}
+
+@keyframes fly-left {
+  0%   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(calc(-50% - 55px), -50%) scale(0.6); opacity: 0; }
+}
+
+@keyframes fly-right {
+  0%   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(calc(-50% + 55px), -50%) scale(0.6); opacity: 0; }
+}
+
+/* Brief glow on cells receiving orbs */
+.cell-receive-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  pointer-events: none;
+  animation: receive-pulse 0.36s ease-out forwards;
+  z-index: 5;
+}
+
+@keyframes receive-pulse {
+  0%   { background: rgba(255, 255, 255, 0.35); }
+  60%  { background: rgba(255, 255, 255, 0.15); }
+  100% { background: rgba(255, 255, 255, 0); }
 }
