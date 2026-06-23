@@ -2,7 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
 import ChainReactionGrid from "./grid/Grid";
 
-const SERVER_URL = import.meta.env.VITE_SERVER_URL ?? "http://localhost:3000";
+// Connect to the backend on the SAME host that served this page, on port 3000.
+// That way it works whether the page is opened locally (localhost) or from
+// another device over the LAN/WiFi (http://<your-PC-IP>:5173 -> <your-PC-IP>:3000).
+// An explicit VITE_SERVER_URL (e.g. for a deployed backend) always wins.
+const SERVER_URL =
+  import.meta.env.VITE_SERVER_URL ??
+  `${window.location.protocol}//${window.location.hostname}:3000`;
 const socket = io(SERVER_URL);
 
 const PLAYER_COLORS = {
