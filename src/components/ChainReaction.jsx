@@ -9,7 +9,6 @@ import ChainReactionGrid from "./grid/Grid";
 const SERVER_URL =
   import.meta.env.VITE_SERVER_URL ??
   `${window.location.protocol}//${window.location.hostname}:3000`;
-const socket = io(SERVER_URL);
 
 const PLAYER_COLORS = {
   P0: { text: "#ff5252", bg: "rgba(255,82,82,0.12)", dot: "red",   bar: "#ff5252" },
@@ -34,7 +33,6 @@ export const ChainReaction = () => {
   const [joinCodeInput, setJoinCodeInput] = useState(sessionFromUrl || "");
   const [joinedSession, setJoinedSession] = useState(null);
   const [players, setPlayers] = useState([]);
-  const [joinedUsers, setJoinedUsers] = useState(0);
   const [copied, setCopied] = useState(false);
 
   const [grid, setGrid] = useState(null);
@@ -47,6 +45,12 @@ export const ChainReaction = () => {
   const [turnDuration, setTurnDuration] = useState(null);
   const [skipToast, setSkipToast] = useState(null);
   const [explodedAt, setExplodedAt] = useState(null);
+
+  const socketRef = useRef(null);
+  if (!socketRef.current) {
+    socketRef.current = io(SERVER_URL);
+  }
+  const socket = socketRef.current;
 
   const timerIntervalRef = useRef(null);
   const skipToastTimerRef = useRef(null);
@@ -99,7 +103,6 @@ export const ChainReaction = () => {
     socket.on("playerJoined", (playersList) => setPlayers(playersList));
     socket.on("playerLeft", (playersList) => setPlayers(playersList));
     socket.on("error", (message) => setErrorMessage(message));
-    socket.on("userCount", (userCount) => setJoinedUsers(userCount));
 
     socket.on("initialGameState", ({ grid, currentTurn }) => {
       setGrid(grid);
@@ -153,7 +156,6 @@ export const ChainReaction = () => {
       socket.off("playerJoined");
       socket.off("playerLeft");
       socket.off("error");
-      socket.off("userCount");
       socket.off("initialGameState");
       socket.off("gameUpdateByOther");
       socket.off("gameOver");
@@ -163,6 +165,8 @@ export const ChainReaction = () => {
       socket.off("turnSkipped");
       clearInterval(timerIntervalRef.current);
       clearTimeout(skipToastTimerRef.current);
+      // Do NOT disconnect here — the socket lives for the full page lifetime.
+      // socket.io tears it down automatically on tab close.
     };
     // labelToName is derived from state and only used inside the toast handler;
     // re-subscribing on every player change isn't needed.
@@ -225,13 +229,29 @@ export const ChainReaction = () => {
   const handleCellClick = (row, col) => socket.emit("cellClicked", row, col);
 
   const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // Clipboard API isn't available (e.g. plain-http LAN) — select for manual copy.
-      shareInputRef.current?.select();
+    // Try the modern Clipboard API first (requires HTTPS or localhost).
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+        return;
+      } catch {
+        // fall through to execCommand
+      }
+    }
+    // Legacy fallback: select the input and execCommand('copy').
+    // Works on plain-HTTP LAN where the Clipboard API is blocked.
+    const input = shareInputRef.current;
+    if (input) {
+      input.select();
+      try {
+        document.execCommand("copy");
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      } catch {
+        // execCommand also failed — text is still selected so user can Ctrl+C manually.
+      }
     }
   };
 
@@ -248,8 +268,6 @@ export const ChainReaction = () => {
 
   return (
     <>
-      <div style={{ color: "#888", fontSize: "0.85em" }}>{`Active users: ${joinedUsers}`}</div>
-
       {errorMessage && (
         <div className="error-banner">
           {errorMessage}
