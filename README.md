@@ -10,13 +10,18 @@ Express + Socket.IO). You need it running for the app to work.
 
 ## What it does
 
-- Create or join a game room by name.
+- Enter a display name (remembered for next time), then **create a game** to get
+  a **shareable invite link** — anyone who opens it lands straight on the join
+  screen for that game. You can also join by typing the short game code.
 - Up to 4 players per room (extra connections join as spectators).
 - A 6×6 board where you place orbs; cells explode in synchronised waves and
   capture neighbours (see the server README for the full rules).
-- Live UI: colour-coded player list with the active player highlighted, a
-  per-turn countdown timer, explosion animations (burst + flying orbs), and a
-  toast when a turn is skipped.
+- Live UI: colour-coded player list (by name) with the active player
+  highlighted, a per-turn countdown timer, explosion animations (burst + flying
+  orbs), and a toast when a turn is skipped.
+
+The invite link is the page URL with a `?session=<id>` query param, so it works
+locally and over the LAN, and the joined game is reflected in the address bar.
 
 ---
 
