@@ -80,6 +80,7 @@ const ChainReactionGrid = ({
           return (
             <motion.div
               key={cellKey}
+              data-testid={`cell-${rowIndex}-${colIndex}`}
               className={`grid-cell${disabled ? " disabled" : ""}`}
               onClick={() => !disabled && handleCellClick(rowIndex, colIndex)}
               whileTap={!disabled ? { scale: 0.9 } : undefined}
